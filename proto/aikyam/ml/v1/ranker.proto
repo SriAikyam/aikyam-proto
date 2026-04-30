@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package aikyam.ml.v1;
+
+option java_multiple_files = true;
+option java_package = "com.aikyam.proto.ml.v1";
+option java_outer_classname = "RankerProto";
+
+// ── Service ──────────────────────────────────────────────────────────────────
+
+service MLRankerService {
+  // Re-rank a batch of candidates using ML models
+  rpc RankCandidates(RankCandidatesRequest) returns (RankCandidatesResponse);
+
+  // Health check for model readiness
+  rpc Health(HealthRequest) returns (HealthResponse);
+}
+
+// ── Request / Response ───────────────────────────────────────────────────────
+
+message RankCandidatesRequest {
+  string user_id = 1;
+  repeated CandidateInput candidates = 2;
+  repeated string top_tradition_tags = 3;
+  map<string, double> temple_affinities = 4;
+  repeated string recently_engaged_post_ids = 5;
+}
+
+message RankCandidatesResponse {
+  repeated RankedCandidate ranked = 1;
+  repeated string active_phases = 2;   // e.g. ["phase2_als", "phase3_lgbm"]
+  bool fallback = 3;                   // true if all ML failed, using heuristic
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  bool healthy = 1;
+  repeated string loaded_models = 2;
+}
+
+// ── Messages ─────────────────────────────────────────────────────────────────
+
+message CandidateInput {
+  string post_id = 1;
+  string post_type = 2;              // POST, REEL, STORY
+  string entity_type = 3;
+  string entity_id = 4;
+  repeated string tradition_tags = 5;
+  int64 created_at_millis = 6;
+  int32 likes = 7;
+  int32 shares = 8;
+  int32 comments = 9;
+  int32 views = 10;
+  double rule_score = 11;            // 0.0 – 1.0 from generation service
+}
+
+message RankedCandidate {
+  string post_id = 1;
+  double ml_score = 2;               // 0.0 – 1.0
+  double phase2_als_score = 3;
+  double phase2_embedding_score = 4;
+  double phase3_lgbm_score = 5;
+}

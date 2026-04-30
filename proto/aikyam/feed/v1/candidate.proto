@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package aikyam.feed.v1;
+
+option java_multiple_files = true;
+option java_package = "com.aikyam.proto.feed.v1";
+option java_outer_classname = "CandidateProto";
+
+// ── Service ──────────────────────────────────────────────────────────────────
+
+service FeedGenerationService {
+  // Get ranked candidates for a user feed
+  rpc GetCandidates(GetCandidatesRequest) returns (GetCandidatesResponse);
+
+  // Ingest a user engagement signal (like, share, view, etc.)
+  rpc IngestSignal(IngestSignalRequest) returns (IngestSignalResponse);
+}
+
+// ── Request / Response ───────────────────────────────────────────────────────
+
+message GetCandidatesRequest {
+  string user_id = 1;
+  int32 limit = 2;
+  CandidateSlot slot = 3;
+  int64 before_sort_index = 4;   // for bottom cursor: items older than this
+  int64 after_sort_index = 5;    // for top cursor: items newer than this
+  repeated string exclude_post_ids = 6;
+  bytes bloom_filter = 7;        // serialized bloom filter for dedup
+}
+
+message GetCandidatesResponse {
+  repeated Candidate candidates = 1;
+  int32 total_available = 2;     // how many matched before limit
+}
+
+message IngestSignalRequest {
+  string user_id = 1;
+  string post_id = 2;
+  SignalType signal_type = 3;
+  double strength = 4;           // 0.0 – 1.0, e.g. watch duration / video length
+  int64 timestamp_millis = 5;
+  map<string, string> metadata = 6;
+}
+
+message IngestSignalResponse {
+  bool accepted = 1;
+  string message = 2;
+}
+
+// ── Enums ────────────────────────────────────────────────────────────────────
+
+enum CandidateSlot {
+  CANDIDATE_SLOT_UNSPECIFIED = 0;
+  CANDIDATE_SLOT_FOLLOWING = 1;    // posts from followed temples/users
+  CANDIDATE_SLOT_SUGGESTED = 2;    // ML-suggested posts
+  CANDIDATE_SLOT_TRENDING = 3;     // globally trending
+  CANDIDATE_SLOT_DISCOVERY = 4;    // diverse / new authors
+  CANDIDATE_SLOT_REELS = 5;        // short video content
+  CANDIDATE_SLOT_KG = 6;           // knowledge-graph-relevant
+}
+
+enum SignalType {
+  SIGNAL_TYPE_UNSPECIFIED = 0;
+  SIGNAL_TYPE_IMPRESSION = 1;
+  SIGNAL_TYPE_CLICK = 2;
+  SIGNAL_TYPE_LIKE = 3;
+  SIGNAL_TYPE_SHARE = 4;
+  SIGNAL_TYPE_WATCH = 5;
+  SIGNAL_TYPE_SAVE = 6;
+  SIGNAL_TYPE_COMMENT = 7;
+  SIGNAL_TYPE_DISLIKE = 8;
+}
+
+// ── Messages ─────────────────────────────────────────────────────────────────
+
+message Candidate {
+  string post_id = 1;
+  string author_id = 2;
+  string temple_id = 3;
+  double score = 4;
+  CandidateSlot slot = 5;
+  int64 sort_index = 6;            // snowflake id, used for cursor pagination
+  int64 created_at_millis = 7;
+  repeated string tradition_tags = 8;
+  string entity_type = 9;          // TEMPLE, LIVE, etc.
+  string entity_id = 10;
+  string media_type = 11;          // image, video, reel
+}

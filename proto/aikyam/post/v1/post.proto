@@ -1,0 +1,111 @@
+syntax = "proto3";
+
+package aikyam.post.v1;
+
+option java_multiple_files = true;
+option java_package = "com.aikyam.proto.post.v1";
+option java_outer_classname = "PostProto";
+
+// ── Service ──────────────────────────────────────────────────────────────────
+
+service PostService {
+  // Batch-get post metadata for feed hydration
+  rpc GetPostsByIds(GetPostsByIdsRequest) returns (GetPostsByIdsResponse);
+
+  // Batch-get author profiles
+  rpc GetAuthorsByIds(GetAuthorsByIdsRequest) returns (GetAuthorsByIdsResponse);
+
+  // Batch-get viewer state (liked, saved, shared)
+  rpc GetViewerState(GetViewerStateRequest) returns (GetViewerStateResponse);
+}
+
+// ── Request / Response ───────────────────────────────────────────────────────
+
+message GetPostsByIdsRequest {
+  repeated string post_ids = 1;
+}
+
+message GetPostsByIdsResponse {
+  repeated Post posts = 1;
+}
+
+message GetAuthorsByIdsRequest {
+  repeated string author_ids = 1;
+}
+
+message GetAuthorsByIdsResponse {
+  repeated Author authors = 1;
+}
+
+message GetViewerStateRequest {
+  string user_id = 1;
+  repeated string post_ids = 2;
+}
+
+message GetViewerStateResponse {
+  map<string, ViewerState> states = 1;  // post_id -> state
+}
+
+// ── Messages ─────────────────────────────────────────────────────────────────
+
+message Post {
+  string post_id = 1;
+  string post_type = 2;        // devotee, temple, priest
+  string text = 3;
+  string author_id = 4;
+  string temple_id = 5;
+  repeated MediaRef media = 6;
+  EntityContext entity_context = 7;
+  Stats stats = 8;
+  ExternalEmbed external_embed = 9;
+  int64 created_at_millis = 10;
+}
+
+message MediaRef {
+  string type = 1;             // IMAGE, VIDEO, AUDIO
+  string asset_id = 2;
+  string url = 3;
+  string thumbhash = 4;
+  string aspect_ratio = 5;
+  string status = 6;
+  map<string, string> variants = 7;   // format_size -> url
+  map<string, string> playback = 8;   // hls -> url, thumbnail -> url
+}
+
+message EntityContext {
+  string entity_type = 1;
+  string entity_id = 2;
+}
+
+message Stats {
+  int32 likes = 1;
+  int32 comments = 2;
+  int32 shares = 3;
+  int32 views = 4;
+}
+
+message ExternalEmbed {
+  string provider = 1;
+  string external_id = 2;
+  string url = 3;
+  string thumbnail = 4;
+  string title = 5;
+  string author = 6;
+  string embed_type = 7;
+}
+
+message Author {
+  string id = 1;
+  string user_id = 2;
+  string priest_id = 3;
+  string name = 4;
+  repeated string roles = 5;
+  bool verified = 6;
+  MediaRef avatar = 7;
+}
+
+message ViewerState {
+  bool liked = 1;
+  bool saved = 2;
+  bool shared = 3;
+}

@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package aikyam.kg.v1;
+
+option java_multiple_files = true;
+option java_package = "com.aikyam.proto.kg.v1";
+option java_outer_classname = "KnowledgeGraphProto";
+
+// ── Service ──────────────────────────────────────────────────────────────────
+
+service KnowledgeGraphService {
+  // Expand user's interest topics for feed personalization
+  rpc GetFeedTopics(GetFeedTopicsRequest) returns (GetFeedTopicsResponse);
+
+  // Get posts relevant to user's graph-derived interests
+  rpc GetRelevantPosts(GetRelevantPostsRequest) returns (GetRelevantPostsResponse);
+
+  // Annotate a post with knowledge-graph topics
+  rpc AnnotatePost(AnnotatePostRequest) returns (AnnotatePostResponse);
+
+  // Get upcoming festivals for a user based on region/tradition
+  rpc GetUpcomingFestivals(GetUpcomingFestivalsRequest) returns (GetUpcomingFestivalsResponse);
+}
+
+// ── Request / Response ───────────────────────────────────────────────────────
+
+message GetFeedTopicsRequest {
+  string user_id = 1;
+  int32 limit = 2;
+  bool include_festival_topics = 3;
+}
+
+message GetFeedTopicsResponse {
+  repeated Topic topics = 1;
+}
+
+message GetRelevantPostsRequest {
+  string user_id = 1;
+  int32 limit = 2;
+  repeated string exclude_post_ids = 3;
+  int64 before_sort_index = 4;
+}
+
+message GetRelevantPostsResponse {
+  repeated KGCandidate candidates = 1;
+}
+
+message AnnotatePostRequest {
+  string post_id = 1;
+  string content_text = 2;
+  repeated string media_urls = 3;
+}
+
+message AnnotatePostResponse {
+  repeated Topic topics = 1;
+  repeated string entities = 2;      // detected entities (deities, temples, festivals)
+  double confidence = 3;
+}
+
+message GetUpcomingFestivalsRequest {
+  string user_id = 1;
+  string region = 2;
+  string tradition = 3;
+  int32 days_ahead = 4;
+}
+
+message GetUpcomingFestivalsResponse {
+  repeated Festival festivals = 1;
+}
+
+// ── Messages ─────────────────────────────────────────────────────────────────
+
+message Topic {
+  string topic_id = 1;
+  string name = 2;
+  string category = 3;               // deity, festival, ritual, scripture, etc.
+  double relevance_score = 4;
+  int32 follower_count = 5;
+}
+
+message KGCandidate {
+  string post_id = 1;
+  double relevance_score = 2;
+  repeated string matched_topics = 3;
+  int64 sort_index = 4;
+}
+
+message Festival {
+  string festival_id = 1;
+  string name = 2;
+  string date = 3;                   // ISO-8601
+  int64 timestamp_millis = 4;
+  repeated string related_topics = 5;
+  double feed_boost_multiplier = 6;  // e.g. 1.5x during festival
+}
