@@ -1,0 +1,9 @@
+version: v2
+lint:
+  use:
+    - DEFAULT
+  except:
+    - PACKAGE_VERSION_SUFFIX   # aikyam/feed/v1 already versioned, suppress double-warning
+breaking:
+  use:
+    - FILE

@@ -1,0 +1,43 @@
+# Lint proto files and detect breaking changes on every PR.
+# Uses buf (https://buf.build) — no token needed for public repos.
+#
+# Breaking change detection: compares against the target branch (main).
+# Any field removal, rename, or type change will fail the check.
+# Safe changes (adding fields, adding enum values) pass through.
+
+name: CI (PR)
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-pr-${{ github.repository }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  lint-and-breaking:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Lint proto files
+        run: buf lint proto/
+
+      - name: Check for breaking changes
+        uses: bufbuild/buf-breaking-action@v1
+        with:
+          input: proto/
+          against: 'https://github.com/${{ github.repository }}.git#branch=${{ github.base_ref }},subdir=proto'
