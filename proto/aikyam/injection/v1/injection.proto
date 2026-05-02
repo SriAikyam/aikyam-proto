@@ -11,17 +11,21 @@ service FeedInjectionService {
 }
 
 message InjectionRequest {
-  string user_id    = 1;
-  string feed_type  = 2;  // MAIN, TEMPLE, EXPLORE, VIDEO
-  string user_role  = 3;  // devotee, priest, guest
-  string cursor_type = 4; // INITIAL, BOTTOM, TOP
+  string user_id     = 1;
+  string feed_type   = 2;  // MAIN, TEMPLE, EXPLORE, VIDEO
+  string user_role   = 3;  // devotee, priest, guest
+  string cursor_type = 4;  // INITIAL, BOTTOM, TOP
 }
 
 message InjectionItem {
-  string post_id      = 1;  // real postId or "injection:{type}:{date}" for synthetic
-  string content_type = 2;  // PACHANG, EVENT, REMINDER, ANNOUNCEMENT
-  int32  priority     = 3;  // higher = shown first
-  map<string, string> metadata = 4; // tithi, nakshatra, title, etc. for synthetic items
+  string post_id       = 1;  // real postId (MONGODB_POST) or "injection:{type}:{date}" (MICROSERVICE/TEMPLATE)
+  string content_type  = 2;  // PACHANG, EVENT, REMINDER, ANNOUNCEMENT
+  int32  priority      = 3;  // higher = shown first
+  map<string, string> metadata = 4;  // kept for extensibility
+  string display_title = 5;  // empty = orchestrator must hydrate from DB (MONGODB_POST)
+  string display_body  = 6;
+  string media_key     = 7;  // R2 asset key — resolved by media service
+  string entity_id     = 8;  // eventId / templeId — empty when not applicable
 }
 
 message InjectionResponse {
