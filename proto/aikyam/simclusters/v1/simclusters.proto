@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package aikyam.simclusters.v1;
+
+option java_multiple_files = true;
+option java_package = "com.aikyam.proto.simclusters.v1";
+option java_outer_classname = "SimClustersProto";
+
+service SimClustersService {
+  // Get personalized discovery candidates from the ANN cluster index
+  rpc GetCandidates(SimGetCandidatesRequest) returns (SimGetCandidatesResponse);
+
+  // Re-rank a batch of candidates by blending base score with SimClusters user/post affinity
+  rpc RankCandidates(SimRankCandidatesRequest) returns (SimRankCandidatesResponse);
+}
+
+// ── GetCandidates ─────────────────────────────────────────────────────────────
+
+message SimGetCandidatesRequest {
+  string user_id             = 1;
+  int32  limit               = 2;
+  repeated string exclude_post_ids = 3;
+}
+
+message SimCandidate {
+  string post_id   = 1;
+  double sim_score = 2;
+}
+
+message SimGetCandidatesResponse {
+  repeated SimCandidate candidates = 1;
+}
+
+// ── RankCandidates ────────────────────────────────────────────────────────────
+
+message SimRankItem {
+  string post_id    = 1;
+  double base_score = 2;
+  string author_id  = 3;
+}
+
+message SimRankCandidatesRequest {
+  string user_id             = 1;
+  repeated SimRankItem candidates = 2;
+}
+
+message SimRankedItem {
+  string post_id     = 1;
+  double final_score = 2;
+  double sim_score   = 3;
+  double base_score  = 4;
+}
+
+message SimRankCandidatesResponse {
+  repeated SimRankedItem ranked = 1;
+}
