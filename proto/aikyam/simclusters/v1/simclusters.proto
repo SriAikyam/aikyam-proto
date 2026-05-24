@@ -23,8 +23,14 @@ message SimGetCandidatesRequest {
 }
 
 message SimCandidate {
-  string post_id   = 1;
-  double sim_score = 2;
+  string post_id        = 1;
+  double sim_score      = 2;
+  int64  created_at_millis = 3;  // post createdAt for cursor pagination + recency scoring
+  string author_id      = 4;     // for follow boost + diversity
+  string temple_id      = 5;     // for follow boost + negative signal filter
+  string entity_id      = 6;     // for festival boost
+  string entity_type    = 7;     // TEMPLE, USER, etc.
+  repeated string tradition_tags = 8;  // for negative signal filter (deity cluster blocking)
 }
 
 message SimGetCandidatesResponse {
